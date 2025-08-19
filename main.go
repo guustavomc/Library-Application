@@ -1,20 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"library/models"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-var books = []models.Book{
-	{ID: 1, Name: "LOTR 1", Price: 50.0},
-	{ID: 2, Name: "GOT", Price: 33.1},
-	{ID: 3, Name: "Star wars", Price: 70.0},
-}
+var books []models.Book
 
 func main() {
+	loadBooks()
 	router := gin.Default()
 
 	router.GET("/books", getBooks)
@@ -59,5 +58,34 @@ func postBooks(c *gin.Context) {
 		return
 	}
 
+	newBook.ID = len(books) + 1
 	books = append(books, newBook)
+	saveBooks()
+	c.JSON(200, newBook)
+}
+
+func loadBooks() {
+	file, err := os.Open("data/books.json")
+	if err != nil {
+		fmt.Println("Error file:", err)
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+
+	if err := decoder.Decode(&books); err != nil {
+		fmt.Println("Error decoding Json: ", err)
+	}
+}
+
+func saveBooks() {
+	file, err := os.Create("data/books.json")
+	if err != nil {
+		fmt.Println("Error file:", err)
+	}
+	defer file.Close()
+	encoder := json.NewEncoder(file)
+
+	if err := encoder.Encode(books); err != nil {
+		fmt.Println("Error decoding Json: ", err)
+	}
 }
